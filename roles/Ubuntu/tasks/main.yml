@@ -30,6 +30,7 @@
   when: ansible_distribution == "CentOS"
 
 
+
 #Setting Banner MOTD
 - name: Creating the MOTD file
   file:
@@ -42,7 +43,7 @@
     block: |
       Ansible Managed by penas
 
-#Installing Monitoring tool: Apache
+#Installing Monitoring tool: Nagios
 - name: Installing Nagios4 dependecies and libraries
   tags: dependecies, libraries
   apt:
@@ -86,7 +87,7 @@
     path: ~/nagios
     state: directory
 
-- name: Downloading and Extracting Nagios Nagios4 from GitHub
+- name: Downloading and Extracting Nagios4 from GitHub
   unarchive:
     src: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.6.tar.gz
     dest: ~/nagios

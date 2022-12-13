@@ -1,0 +1,60 @@
+#PENAS#
+
+#Installing Enterprise Service: Apache & httpd
+
+- name: install apache and php for CentOS servers
+  tags: apache,centos,httpd
+  dnf:
+    name:
+      - httpd
+      - php
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: start httpd (CentOS)
+  tags: apache,centos,httpd
+  service:
+    name: httpd
+    state: started
+    enabled: true
+  when: ansible_distribution == "CentOS"
+
+
+#Setting Banner MOTD
+- name: Create the motd file
+  file:
+    path: /etc/motd
+    state: touch
+
+- name: Changing the motd file
+  blockinfile:
+    path: /etc/motd
+    block: |
+      Ansible Managed by penas
+
+#Installing Monitoring Tool: Nagios
+- name: install nagios for centos
+  tags: nagios,apache,centos
+  dnf:
+    name: nagios
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: start nagios for centos
+  tags: nagios,apache,centos,httpd
+  service:
+    name: nagios
+    state: started
+  when: ansible_distribution == "CentOS"
+
+- name: Confirmation of Nagios4 is Enabled
+  service:
+    name: nagios
+    state: restarted
+    enabled: true
+
+- name: Confirmation of httpd is enabled
+  service:
+    name: httpd
+    state: restarted
+    enabled: true
