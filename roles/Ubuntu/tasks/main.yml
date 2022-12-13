@@ -1,0 +1,146 @@
+#PENAS#
+
+#Installing Enterprise Service: Apache & httpd
+
+- name: install apache and php for Ubuntu servers
+  tags: apache,apache2,ubuntu
+  apt:
+    name:
+      - apache2
+      - libapache2-mod-php
+    state: latest
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: install apache and php for CentOS servers
+  tags: apache,centos,httpd
+  dnf:
+    name:
+      - httpd
+      - php
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: start httpd (CentOS)
+  tags: apache,centos,httpd
+  service:
+    name: httpd
+    state: started
+    enabled: true
+  when: ansible_distribution == "CentOS"
+
+
+#Setting Banner MOTD
+- name: Creating the MOTD file
+  file:
+    path: /etc/motd
+    state: touch
+
+- name: Configuring MOTD file
+  blockinfile:
+    path: /etc/motd
+    block: |
+      Ansible Managed by penas
+
+#Installing Monitoring tool: Apache
+- name: Installing Nagios4 dependecies and libraries
+  tags: dependecies, libraries
+  apt:
+    name:
+      - autoconf
+      - gcc
+      - libc6
+      - make
+      - wget
+      - unzip
+      - apache2
+      - php
+      - libapache2-mod-php7.4
+      - libgd-dev
+      -  openssl
+      - libssl-dev
+      - autoconf
+      - gcc
+      - libc6
+      - libmcrypt-dev
+      - make
+      - libssl-dev
+      - wget
+      - bc
+      - gawk
+      - dc
+      - build-essential
+      - snmp
+      - libnet-snmp-perl
+      - gettext
+      - python3-pip
+      - python3
+    state: latest
+
+- name: Install passlib python package
+  pip:
+    name: passlib
+
+- name: Creating a directory for the downloaded files
+  file:
+    path: ~/nagios
+    state: directory
+
+- name: Downloading and Extracting Nagios Nagios4 from GitHub
+  unarchive:
+    src: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.6.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Creating Users and Group, Compiling anf Installation of Nagios4
+  shell: |
+    cd ~/nagios/nagioscore-*
+    sudo ./configure --with-httpd-conf=/etc/apache2/sites-enabled
+    sudo make all
+    sudo make install-groups-users
+    sudo usermod -a -G nagios www-data
+    sudo make install
+    sudo make install-daemoninit
+    sudo make install-commandmode
+    sudo make install-config
+    sudo make install-webconf
+    sudo a2enmod rewrite
+    sudo a2enmod cgi
+
+- name: Downloading and Extracting nagios plugins of Nagios4 from GitHub
+  unarchive:
+    src: https://github.com/nagios-plugins/nagios-plugins/archive/release-2.3.3.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Compiling and Installing Nagios4 Plugins
+  shell: |
+    cd ~/nagios/nagios-plugins*
+    ./tools/setup
+    ./configure
+    make
+    make install
+
+- name: Setting User and Password
+  community.general.htpasswd:
+    path: /usr/local/nagios/etc/htpasswd.users
+    name: penas
+    password: 0uma999
+
+- name: Confirmation of Nagios4 is Enabled
+  service:
+    name: nagios
+    state: restarted
+    enabled: true
+
+- name: Confirmation of httpd is enabled
+  service:
+    name: apache2
+    state: restarted
+    enabled: true
